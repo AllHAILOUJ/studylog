@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyLog — 数学学習管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;700&family=Noto+Sans+JP:wght@300;400;500&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* =========================================================
+       RESET & CSS VARIABLES
+    ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0d1117;
+      --bg-card:      #161b22;
+      --bg-elevated:  #1c2128;
+      --border:       #21262d;
+      --border-muted: #30363d;
+      --text:         #e6edf3;
+      --text-muted:   #8b949e;
+      --text-subtle:  #484f58;
+      --accent:       #388bfd;
+      --accent-dark:  #1f6feb;
+      --success:      #2ea043;
+      --warning:      #d29922;
+      --danger:       #f85149;
+
+      /* 理解度カラー */
+      --u-perfect: #2ea043;
+      --u-good:    #388bfd;
+      --u-partial: #e3b341;
+      --u-wrong:   #f85149;
+
+      --radius:    8px;
+      --radius-lg: 12px;
+      --shadow:    0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    html { font-size: 14px; }
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* =========================================================
+       LAYOUT
+    ========================================================= */
+    #app {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 16px 80px;
+    }
+
+    /* =========================================================
+       HEADER / NAV
+    ========================================================= */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 0 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+      z-index: 50;
+      gap: 12px;
+    }
+    .header-logo {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .header-logo span { color: var(--accent); }
+    .nav { display: flex; align-items: center; gap: 4px; }
+    .nav-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      font-family: 'Noto Sans JP', sans-serif;
+      transition: all 0.15s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .nav-btn:hover { background: var(--bg-elevated); color: var(--text); }
+    .nav-btn.active { background: var(--bg-elevated); color: var(--text); }
+    .review-badge {
+      background: var(--danger);
+      color: white;
+      border-radius: 20px;
+      padding: 1px 6px;
+      font-size: 0.7rem;
+      font-family: 'Fira Code', monospace;
+    }
+    .header-date { font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .btn-primary  { background: var(--accent-dark); color: white; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent); }
+    .btn-secondary { background: var(--bg-elevated); color: var(--text); border-color: var(--border-muted); }
+    .btn-secondary:hover { background: #2d333b; border-color: #8b949e; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border-color: transparent; }
+    .btn-ghost:hover { background: var(--bg-elevated); color: var(--text); }
+    .btn-danger { background: rgba(248,81,73,.1); color: var(--danger); border-color: rgba(248,81,73,.3); }
+    .btn-danger:hover { background: rgba(248,81,73,.2); }
+    .btn-icon { padding: 5px; }
+
+    /* =========================================================
+       SECTION HEADER
+    ========================================================= */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .section-title { font-family: 'Noto Serif JP', serif; font-size: 1rem; font-weight: 700; }
+
+    /* =========================================================
+       BREADCRUMB
+    ========================================================= */
+    .breadcrumb { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 0.82rem; margin-bottom: 20px; flex-wrap: wrap; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; cursor: pointer; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* =========================================================
+       BADGES
+    ========================================================= */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      font-family: 'Fira Code', monospace;
+      border: 1px solid;
+    }
+    .badge-perfect { background: rgba(46,160,67,.15); color: var(--u-perfect); border-color: rgba(46,160,67,.3); }
+    .badge-good    { background: rgba(56,139,253,.15); color: var(--u-good);    border-color: rgba(56,139,253,.3); }
+    .badge-partial { background: rgba(227,179,65,.15); color: var(--u-partial); border-color: rgba(227,179,65,.3); }
+    .badge-wrong   { background: rgba(248,81,73,.15);  color: var(--u-wrong);   border-color: rgba(248,81,73,.3); }
+    .badge-none    { background: var(--bg-elevated); color: var(--text-subtle); border-color: var(--border); }
+
+    /* =========================================================
+       PROGRESS BAR
+    ========================================================= */
+    .progress-bar { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .progress-bar.thin { height: 3px; }
+    .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+
+    /* =========================================================
+       HOME — TEXTBOOK CARDS
+    ========================================================= */
+    .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+
+    .textbook-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .textbook-card:hover {
+      border-color: var(--border-muted);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+    .textbook-title {
+      font-family: 'Noto Serif JP', serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 4px;
+    }
+    .textbook-meta { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; }
+    .textbook-stats { display: flex; gap: 14px; margin-bottom: 10px; flex-wrap: wrap; }
+    .stat-label { color: var(--text-muted); }
+    .stat-value { font-weight: 600; font-family: 'Fira Code', monospace; }
+    .stat-danger  { color: var(--danger); }
+    .stat-warning { color: var(--warning); }
+    .stat-success { color: var(--success); }
+    .u-row { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+
+    .add-textbook-card {
+      background: transparent;
+      border: 2px dashed var(--border-muted);
+      border-radius: var(--radius-lg);
+      padding: 40px 20px;
+      cursor: pointer;
+      text-align: center;
+      color: var(--text-muted);
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .add-textbook-card:hover { border-color: var(--accent); color: var(--accent); background: rgba(56,139,253,.04); }
+
+    /* =========================================================
+       REVIEW BANNER
+    ========================================================= */
+    .review-banner {
+      background: linear-gradient(135deg, rgba(56,139,253,.08), rgba(31,111,235,.04));
+      border: 1px solid rgba(56,139,253,.3);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .review-count-big { font-family: 'Noto Serif JP', serif; font-size: 2.2rem; font-weight: 700; color: var(--accent); line-height: 1; }
+
+    /* =========================================================
+       TEXTBOOK DETAIL — CHAPTER ACCORDION
+    ========================================================= */
+    .textbook-header-title { font-family: 'Noto Serif JP', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+    .textbook-overview { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin: 10px 0 20px; }
+
+    .chapter-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 6px;
+      overflow: hidden;
+    }
+    .chapter-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      gap: 12px;
+      transition: background 0.12s;
+      user-select: none;
+    }
+    .chapter-header:hover { background: var(--bg-elevated); }
+    .chapter-name { font-family: 'Noto Serif JP', serif; font-size: 0.88rem; font-weight: 700; flex: 1; }
+    .chapter-progress-text { font-size: 0.75rem; color: var(--text-muted); font-family: 'Fira Code', monospace; white-space: nowrap; }
+    .chapter-mini-bar { width: 70px; }
+    .chapter-chevron { color: var(--text-muted); transition: transform 0.2s; font-size: 11px; }
+    .chapter-chevron.open { transform: rotate(180deg); }
+
+    /* =========================================================
+       PROBLEM TABLE
+    ========================================================= */
+    .problem-list { border-top: 1px solid var(--border); }
+    .table-header {
+      display: grid;
+      grid-template-columns: 38px 88px 50px 1fr 88px 30px;
+      gap: 8px;
+      padding: 5px 16px;
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border);
+      font-size: 0.69rem;
+      color: var(--text-subtle);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .problem-row {
+      display: grid;
+      grid-template-columns: 38px 88px 50px 1fr 88px 30px;
+      gap: 8px;
+      align-items: center;
+      padding: 7px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+      font-size: 0.8rem;
+    }
+    .problem-row:last-child { border-bottom: none; }
+    .problem-row:hover { background: var(--bg-elevated); }
+    .problem-row.row-overdue { background: rgba(248,81,73,.04); border-left: 2px solid var(--danger); padding-left: 14px; }
+    .problem-row.row-due    { background: rgba(210,153,34,.04); border-left: 2px solid var(--warning); padding-left: 14px; }
+
+    .p-num  { font-family: 'Fira Code', monospace; font-size: 0.75rem; color: var(--text-muted); text-align: center; }
+    .p-date { font-family: 'Fira Code', monospace; font-size: 0.75rem; color: var(--text-muted); }
+    .p-miss { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .p-nr   { font-family: 'Fira Code', monospace; font-size: 0.72rem; color: var(--text-muted); text-align: right; }
+    .p-nr.nr-due     { color: var(--warning); font-weight: 600; }
+    .p-nr.nr-overdue { color: var(--danger); font-weight: 600; }
+    .p-edit { display: flex; justify-content: center; color: var(--text-subtle); font-size: .75rem; }
+
+    /* =========================================================
+       REVIEW VIEW
+    ========================================================= */
+    .review-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.12s;
+      margin-bottom: 6px;
+    }
+    .review-item:hover { border-color: var(--border-muted); }
+    .review-item.r-overdue { border-left: 3px solid var(--danger); }
+    .review-item.r-today   { border-left: 3px solid var(--warning); }
+    .review-item-info { flex: 1; min-width: 0; }
+    .review-item-title { font-size: 0.85rem; font-weight: 500; margin-bottom: 2px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .review-item-sub   { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .review-group-label { font-size: 0.78rem; color: var(--text-muted); margin: 14px 0 6px; font-weight: 500; }
+
+    /* =========================================================
+       EXPORT VIEW
+    ========================================================= */
+    .export-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; margin-bottom: 10px; }
+    .export-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 5px; }
+    .export-desc  { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 12px; }
+    .code-block {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 180px;
+      line-height: 1.5;
+    }
+    .import-zone {
+      border: 2px dashed var(--border-muted);
+      border-radius: 8px;
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+    .import-zone:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.72);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      backdrop-filter: blur(3px);
+    }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-muted);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 500px;
+      max-height: 92vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+    .modal-lg { max-width: 600px; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--border); }
+    .modal-title  { font-family: 'Noto Serif JP', serif; font-size: 0.95rem; font-weight: 700; }
+    .modal-body   { padding: 18px 20px; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* =========================================================
+       FORM ELEMENTS
+    ========================================================= */
+    .form-group  { margin-bottom: 14px; }
+    .form-label  { display: block; font-size: 0.78rem; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; }
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-muted);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 0.82rem;
+      padding: 7px 11px;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select:focus { outline: none; border-color: var(--accent); }
+    .form-textarea { resize: vertical; min-height: 80px; line-height: 1.7; }
+    .form-select option { background: #1c2128; }
+
+    /* 理解度ボタン */
+    .u-selector { display: flex; gap: 7px; }
+    .u-btn {
+      flex: 1;
+      padding: 10px 4px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      text-align: center;
+      font-family: 'Fira Code', monospace;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.15s;
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+    }
+    .u-btn:hover { border-color: var(--border-muted); color: var(--text); }
+    .u-btn[data-u="◎"].active { background: rgba(46,160,67,.15); border-color: var(--u-perfect); color: var(--u-perfect); }
+    .u-btn[data-u="〇"].active { background: rgba(56,139,253,.15); border-color: var(--u-good);    color: var(--u-good); }
+    .u-btn[data-u="△"].active { background: rgba(227,179,65,.15); border-color: var(--u-partial); color: var(--u-partial); }
+    .u-btn[data-u="×"].active { background: rgba(248,81,73,.15);  border-color: var(--u-wrong);   color: var(--u-wrong); }
+
+    /* テンプレート選択 */
+    .template-opt {
+      display: flex;
+      align-items: center;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.12s;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .template-opt:hover, .template-opt.selected { border-color: var(--accent); background: rgba(56,139,253,.07); }
+    .template-name  { font-size: 0.82rem; font-weight: 500; }
+    .template-count { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* 章エディタ行 */
+    .ch-row { display: grid; grid-template-columns: 1fr 72px 26px; gap: 5px; margin-bottom: 5px; align-items: center; }
+
+    /* =========================================================
+       UTILITY
+    ========================================================= */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .chip-danger { border-color: rgba(248,81,73,.3); color: var(--danger); }
+    .empty-state { text-align: center; padding: 56px 20px; color: var(--text-muted); }
+    .empty-icon  { font-size: 2.8rem; margin-bottom: 10px; opacity: .5; }
+
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-muted);
+      border-radius: 8px;
+      padding: 9px 15px;
+      font-size: 0.82rem;
+      z-index: 200;
+      box-shadow: var(--shadow);
+      animation: fadeUp .2s ease;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-muted); border-radius: 3px; }
+
+    @media (max-width: 580px) {
+      /* ---- 既存ルール ---- */
+      .problem-row, .table-header { grid-template-columns: 34px 76px 44px 1fr; }
+      .problem-row > :nth-child(5),
+      .problem-row > :nth-child(6),
+      .table-header > :nth-child(5),
+      .table-header > :nth-child(6) { display: none; }
+      .home-grid { grid-template-columns: 1fr; }
+      .textbook-overview { gap: 10px; }
+
+      /* ---- ① ヘッダー：2段レイアウト ---- */
+      /* ロゴ行 + ナビ行に分け、日付は省略。PCでは一切発動しない。 */
+      .header {
+        flex-wrap: wrap;
+        padding: 10px 0 0;
+        gap: 0;
+      }
+      .header-logo { padding-bottom: 10px; }
+      .header-date { display: none; }
+      .nav {
+        order: 2;
+        width: 100%;
+        justify-content: space-around;
+        border-top: 1px solid var(--border);
+        padding: 4px 0;
+        gap: 0;
+      }
+      .nav-btn {
+        font-size: 0.73rem;
+        padding: 7px 4px;
+        flex: 1;
+        justify-content: center;
+      }
+
+      /* ---- ② iOS フォームズーム防止 ---- */
+      /* iOS Safariはfont-size < 16pxの入力欄を自動ズームする。 */
+      /* font-size: 16pxに上書きすることで不要なズームを抑止。   */
+      .form-input,
+      .form-textarea,
+      .form-select { font-size: 16px; }
+
+      /* ---- ③ モーダル：キーボード表示時の押しつぶし対策 ---- */
+      /* ソフトキーボードが開くとviewportが縮む。                */
+      /* overlay を上端基準・スクロール可能にして内容を確保。    */
+      .overlay {
+        align-items: flex-start;
+        padding-top: 14px;
+        overflow-y: auto;
+      }
+      .modal {
+        /* dvh = Dynamic Viewport Height（キーボード高を除いた実高さ） */
+        /* 非対応ブラウザは vh にフォールバック */
+        max-height: calc(100vh - 28px);
+        max-height: calc(100dvh - 28px);
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+// ================================================================
+//  CONSTANTS
+// ================================================================
+
+/**
+ * エビングハウスの忘却曲線に基づく復習間隔（デフォルト値）
+ * ユーザーが設定を変更した場合は localStorage の値が優先される。
+ */
+const DEFAULT_STRATEGY = {
+  '◎': [],
+  '〇': [7, 30],
+  '△': [3, 7, 14],
+  '×': [1, 3, 7, 14],
+};
+
+const STRATEGY_KEY = 'studylog_strategy';
+
+function getStrategy() {
+  try {
+    const raw = localStorage.getItem(STRATEGY_KEY);
+    if (!raw) return { ...DEFAULT_STRATEGY };
+    return JSON.parse(raw);
+  } catch(e) { return { ...DEFAULT_STRATEGY }; }
+}
+
+function saveStrategy(strat) {
+  localStorage.setItem(STRATEGY_KEY, JSON.stringify(strat));
+}
+
+const U_LEVELS = ['◎', '〇', '△', '×'];
+
+// ================================================================
+//  BUILT-IN TEMPLATES（テンプレート参考書）
+// ================================================================
+
+const TEMPLATES = [
+  {
+    id: 'custom',
+    title: 'カスタム（空白）',
+    desc: '章と問題数を自分で入力',
+    chapters: []
+  },
+  {
+    id: 'platica_rikei',
+    title: '理系数学 入試の核心 標準編',
+    desc: '入試頻出問題を厳選した問題集（数II・B）',
+    chapters: [
+      { name: '2次関数',         problemCount: 8  },
+      { name: '数と式',          problemCount: 16 },
+      { name: '図形と計量',      problemCount: 5  },
+      { name: '図形と方程式',    problemCount: 16 },
+      { name: '三角関数',        problemCount: 12 },
+      { name: '指数関数・対数関数', problemCount: 10 },
+      { name: '微分法',          problemCount: 9  },
+      { name: '積分法',          problemCount: 11 },
+      { name: '場合の数',        problemCount: 7  },
+      { name: '確率',            problemCount: 11 },
+      { name: '数列',            problemCount: 25 },
+      { name: '平面ベクトル',    problemCount: 13 },
+      { name: '空間ベクトル',    problemCount: 11 },
+      { name: '複素数平面',      problemCount: 11 },
+    ]
+  },
+  {
+    id: 'platica_bunkei',
+    title: '文系数学の良問プラチカ 数I・A・II・B',
+    desc: '文系最難関大向けの厳選良問集',
+    chapters: [
+      { name: '数と式・方程式',   problemCount: 12 },
+      { name: '2次関数',         problemCount: 10 },
+      { name: '三角比・図形',    problemCount: 8  },
+      { name: '場合の数・確率',  problemCount: 14 },
+      { name: '整数',            problemCount: 8  },
+      { name: '図形と方程式',    problemCount: 10 },
+      { name: '三角関数',        problemCount: 8  },
+      { name: '指数・対数',      problemCount: 8  },
+      { name: '微分・積分',      problemCount: 12 },
+      { name: '数列',            problemCount: 14 },
+      { name: 'ベクトル',        problemCount: 12 },
+    ]
+  },
+  {
+    id: 'ao_chart_2b',
+    title: '青チャート 数学II+B',
+    desc: '網羅系の定番。例題・練習問題',
+    chapters: [
+      { name: '式と計算・複素数',     problemCount: 44 },
+      { name: '方程式と式の証明',     problemCount: 26 },
+      { name: '図形と方程式',         problemCount: 52 },
+      { name: '三角関数',             problemCount: 42 },
+      { name: '指数関数・対数関数',   problemCount: 34 },
+      { name: '微分法',               problemCount: 42 },
+      { name: '積分法',               problemCount: 42 },
+      { name: '数列',                 problemCount: 54 },
+      { name: 'ベクトル',             problemCount: 52 },
+      { name: '確率分布と統計的な推測', problemCount: 24 },
+    ]
+  },
+  {
+    id: 'kiso_seiko_2b',
+    title: '基礎問題精講 数学II+B',
+    desc: '標準的な精講タイプ問題集',
+    chapters: [
+      { name: '式と計算',             problemCount: 22 },
+      { name: '複素数と方程式',       problemCount: 14 },
+      { name: '図形と方程式',         problemCount: 28 },
+      { name: '三角関数',             problemCount: 24 },
+      { name: '指数関数・対数関数',   problemCount: 20 },
+      { name: '微分法',               problemCount: 26 },
+      { name: '積分法',               problemCount: 22 },
+      { name: '数列',                 problemCount: 30 },
+      { name: 'ベクトル',             problemCount: 34 },
+    ]
+  },
+  {
+    id: 'kiso_seiko_1a',
+    title: '基礎問題精講 数学I+A',
+    desc: '高1・高2の基礎固めに最適',
+    chapters: [
+      { name: '数と式',               problemCount: 24 },
+      { name: '2次関数',             problemCount: 22 },
+      { name: '三角比',               problemCount: 18 },
+      { name: 'データの分析',         problemCount: 10 },
+      { name: '場合の数・確率',       problemCount: 28 },
+      { name: '整数の性質',           problemCount: 18 },
+      { name: '図形の性質',           problemCount: 20 },
+    ]
+  },
+];
+
+// ================================================================
+//  UTILITIES
+// ================================================================
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
+function daysDiff(dateStr) {
+  if (!dateStr) return null;
+  const now = new Date(); now.setHours(0,0,0,0);
+  const tgt = new Date(dateStr); tgt.setHours(0,0,0,0);
+  return Math.round((tgt - now) / 86400000);
+}
+
+function fmtDate(s) {
+  if (!s) return '—';
+  const d = new Date(s);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ================================================================
+//  STORAGE
+// ================================================================
+
+const DB_KEY = 'studylog_v2';
+
+function load() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (!raw) return { textbooks: [], chapters: [], problems: [] };
+    return JSON.parse(raw);
+  } catch(e) { return { textbooks: [], chapters: [], problems: [] }; }
+}
+
+function save(data) {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(data)); }
+  catch(e) { toast('⚠️ 保存に失敗しました', 'danger'); }
+}
+
+// ================================================================
+//  DATA OPERATIONS
+// ================================================================
+
+function getTextbooks()   { return load().textbooks; }
+
+function getChapters(textbookId) {
+  return load().chapters.filter(c => c.textbookId === textbookId).sort((a,b) => a.order - b.order);
+}
+
+function getChapterProblems(chapterId) {
+  return load().problems.filter(p => p.chapterId === chapterId).sort((a,b) => a.problemNumber - b.problemNumber);
+}
+
+function getTextbookProblems(textbookId) {
+  const ids = new Set(getChapters(textbookId).map(c => c.id));
+  return load().problems.filter(p => ids.has(p.chapterId));
+}
+
+function updateProblem(id, patch) {
+  const data = load();
+  const i = data.problems.findIndex(p => p.id === id);
+  if (i === -1) return;
+  data.problems[i] = { ...data.problems[i], ...patch };
+  save(data);
+}
+
+/**
+ * 新しい参考書を追加（章・問題レコードを自動生成）
+ */
+function addTextbook(title, chapters) {
+  const data = load();
+  const tbId = genId();
+  data.textbooks.push({ id: tbId, title, subject: '数学', createdAt: today() });
+
+  chapters.forEach((ch, i) => {
+    const chId = genId();
+    data.chapters.push({ id: chId, textbookId: tbId, name: ch.name, order: i+1, problemCount: ch.problemCount });
+    for (let n = 1; n <= ch.problemCount; n++) {
+      data.problems.push({
+        id: genId(), chapterId: chId, problemNumber: n,
+        date: null, u: null, miss: '', rc: 0, nr: null, penalty: 0, lastReviewDate: null
+      });
+    }
+  });
+
+  save(data);
+  return tbId;
+}
+
+function removeTextbook(id) {
+  const data = load();
+  const chIds = new Set(data.chapters.filter(c => c.textbookId === id).map(c => c.id));
+  data.textbooks = data.textbooks.filter(t => t.id !== id);
+  data.chapters  = data.chapters.filter(c => c.textbookId !== id);
+  data.problems  = data.problems.filter(p => !chIds.has(p.chapterId));
+  save(data);
+}
+
+/**
+ * 旧フォーマット（配列形式JSON）のインポート
+ * 旧データは chapter 名+sequential id で管理されていたものを新構造に変換
+ */
+function importLegacy(arr, title) {
+  // 章の出現順を保持しつつユニーク化
+  const chapterNames = [];
+  const seen = new Set();
+  for (const p of arr) {
+    if (p.chapter && !seen.has(p.chapter)) {
+      chapterNames.push(p.chapter);
+      seen.add(p.chapter);
+    }
+  }
+
+  const data = load();
+  const tbId = genId();
+  data.textbooks.push({ id: tbId, title, subject: '数学', createdAt: today() });
+
+  const chMap = {};
+  chapterNames.forEach((name, i) => {
+    const chId = genId();
+    const cnt = arr.filter(p => p.chapter === name).length;
+    data.chapters.push({ id: chId, textbookId: tbId, name, order: i+1, problemCount: cnt });
+    chMap[name] = chId;
+  });
+
+  const ctr = {};
+  for (const p of arr) {
+    if (!p.chapter) continue;
+    const chId = chMap[p.chapter];
+    if (!ctr[chId]) ctr[chId] = 1;
+    data.problems.push({
+      id: genId(),
+      chapterId: chId,
+      problemNumber: ctr[chId]++,
+      legacyId: p.id,
+      date:           p.date   || null,
+      u:              p.u      || null,
+      miss:           p.miss   || '',
+      rc:             p.rc     || 0,
+      nr:             p.nr     || null,
+      penalty:        p.penalty || 0,
+      lastReviewDate: p.lastReviewDate || null,
+    });
+  }
+
+  save(data);
+  return tbId;
+}
+
+/**
+ * バックアップJSON（新フォーマット）のマージインポート
+ */
+function importBackup(json) {
+  const data = load();
+  const existIds = new Set(data.textbooks.map(t => t.id));
+  json.textbooks.forEach(t => { if (!existIds.has(t.id)) data.textbooks.push(t); });
+  data.chapters.push(...json.chapters);
+  data.problems.push(...json.problems);
+  save(data);
+}
+
+// ================================================================
+//  STATISTICS
+// ================================================================
+
+function statsFor(textbookId) {
+  const problems = getTextbookProblems(textbookId);
+  const t = today();
+  const studied = problems.filter(p => p.date);
+  const uc = { '◎': 0, '〇': 0, '△': 0, '×': 0 };
+  studied.forEach(p => { if (p.u) uc[p.u] = (uc[p.u] || 0) + 1; });
+  return {
+    total: problems.length,
+    studied: studied.length,
+    due: problems.filter(p => p.nr && p.nr <= t).length,
+    overdue: problems.filter(p => p.nr && p.nr < t).length,
+    uc,
+    pct: problems.length ? Math.round(studied.length / problems.length * 100) : 0,
+  };
+}
+
+// ================================================================
+//  REVIEW ENGINE（エビングハウス忘却曲線）
+// ================================================================
+
+function reviewsDue() {
+  const t = today();
+  const data = load();
+  const chMap = {}; data.chapters.forEach(c => chMap[c.id] = c);
+  const tbMap = {}; data.textbooks.forEach(t => tbMap[t.id] = t);
+
+  return data.problems
+    .filter(p => p.nr && p.nr <= t && p.date)
+    .map(p => ({ ...p, _ch: chMap[p.chapterId], _tb: tbMap[chMap[p.chapterId]?.textbookId] }))
+    .filter(p => p._ch && p._tb)
+    .sort((a,b) => a.nr.localeCompare(b.nr));
+}
+
+/**
+ * 問題の学習/復習を記録
+ * @param {string} id        - 問題ID
+ * @param {Object} patch     - { date, u, miss } の更新内容
+ * @param {boolean} isReview - 復習完了フラグ（trueでrc++して次回日を計算）
+ */
+function recordStudy(id, patch, isReview) {
+  const data = load();
+  const i = data.problems.findIndex(p => p.id === id);
+  if (i === -1) return;
+
+  const p = data.problems[i];
+  const u = patch.u || p.u;
+  const t = today();
+
+  if (isReview) {
+    const newRc = p.rc + 1;
+    const strat = (getStrategy()[u]) || [];
+    const nextNr = newRc < strat.length ? addDays(t, strat[newRc]) : null;
+    data.problems[i] = { ...p, u, miss: patch.miss ?? p.miss, rc: newRc, lastReviewDate: t, nr: nextNr };
+  } else {
+    const isNew = !p.date;
+    const strat = (getStrategy()[u]) || [];
+    const firstNr = (isNew && strat.length > 0) ? addDays(patch.date || t, strat[0]) : p.nr;
+    data.problems[i] = { ...p, date: patch.date || t, u, miss: patch.miss ?? p.miss, nr: isNew ? firstNr : p.nr };
+  }
+
+  save(data);
+}
+
+// ================================================================
+//  EXPORT
+// ================================================================
+
+function dl(content, name, mime) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type: mime }));
+  a.download = name;
+  a.click();
+}
+
+function exportBackup() {
+  dl(JSON.stringify(load(), null, 2), `studylog_backup_${today()}.json`, 'application/json');
+}
+
+function exportCSV(textbookId) {
+  const data = load();
+  const chMap = {}; data.chapters.forEach(c => chMap[c.id] = c);
+  const tbMap = {}; data.textbooks.forEach(t => tbMap[t.id] = t);
+
+  const src = textbookId
+    ? data.problems.filter(p => chMap[p.chapterId]?.textbookId === textbookId)
+    : data.problems;
+
+  const rows = src.filter(p => p.date).map(p => {
+    const ch = chMap[p.chapterId];
+    const tb = tbMap[ch?.textbookId];
+    return [
+      esc(tb?.title||''), esc(ch?.name||''), p.problemNumber,
+      p.date||'', p.u||'', p.rc, `"${(p.miss||'').replace(/"/g,'""')}"`, p.nr||''
+    ].join(',');
+  });
+
+  dl('\uFEFF参考書,章,問題番号,学習日,理解度,復習回数,ミスメモ,次回復習日\n' + rows.join('\n'),
+    `studylog_miss_${today()}.csv`, 'text/csv');
+}
+
+function exportForClaude(textbookId) {
+  const data = load();
+  const chMap = {}; data.chapters.forEach(c => chMap[c.id] = c);
+  const tbMap = {}; data.textbooks.forEach(t => tbMap[t.id] = t);
+
+  const src = textbookId
+    ? data.problems.filter(p => chMap[p.chapterId]?.textbookId === textbookId)
+    : data.problems;
+
+  const studied = src.filter(p => p.date);
+  const missLog = studied.filter(p => p.miss?.trim()).map(p => {
+    const ch = chMap[p.chapterId];
+    return { 参考書: tbMap[ch?.textbookId]?.title||'', 章: ch?.name||'', 問題: p.problemNumber, 学習日: p.date, 理解度: p.u, 復習回数: p.rc, ミス内容: p.miss };
+  });
+
+  const chStats = {};
+  studied.forEach(p => {
+    const ch = chMap[p.chapterId];
+    if (!ch) return;
+    if (!chStats[ch.name]) chStats[ch.name] = { 学習数: 0, ミス数: 0 };
+    chStats[ch.name].学習数++;
+    if (p.miss?.trim()) chStats[ch.name].ミス数++;
+  });
+
+  const out = {
+    エクスポート日時: new Date().toLocaleString('ja-JP'),
+    対象: tbMap[textbookId]?.title || '全参考書',
+    集計: { 学習済み: studied.length, ミスあり: missLog.length, ミス率: studied.length ? Math.round(missLog.length/studied.length*100)+'%' : '0%' },
+    章別集計: chStats,
+    ミス一覧: missLog,
+  };
+
+  dl(JSON.stringify(out, null, 2), `studylog_claude_${today()}.json`, 'application/json');
+  toast('✅ Claude分析データを保存しました');
+}
+
+// ================================================================
+//  APP STATE
+// ================================================================
+
+const S = {
+  view: 'home',       // 'home' | 'textbook' | 'review' | 'export'
+  tbId: null,         // 現在の参考書ID
+  expanded: new Set(),
+  editingProblemId: null,
+  editingU: null,
+};
+
+function go(view, extra = {}) {
+  S.view = view;
+  Object.assign(S, extra);
+  render();
+}
+
+// ================================================================
+//  BADGE HELPER
+// ================================================================
+
+function badgeClass(u) {
+  if (u === '◎') return 'badge badge-perfect';
+  if (u === '〇') return 'badge badge-good';
+  if (u === '△') return 'badge badge-partial';
+  if (u === '×') return 'badge badge-wrong';
+  return 'badge badge-none';
+}
+
+function pColor(pct) {
+  if (pct >= 80) return '#2ea043';
+  if (pct >= 50) return '#388bfd';
+  if (pct >= 20) return '#d29922';
+  return '#f85149';
+}
+
+// ================================================================
+//  VIEW: HOME
+// ================================================================
+
+function viewHome() {
+  const tbs = getTextbooks();
+  const due = reviewsDue();
+  const t = today();
+
+  const banner = due.length ? `
+    <div class="review-banner">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div>
+          <div class="review-count-big">${due.length}</div>
+          <div style="font-size:.82rem;color:var(--text-muted)">件の復習が今日の予定</div>
+        </div>
+        ${due.filter(r => r.nr < t).length ? `<span class="chip chip-danger">⚠ ${due.filter(r => r.nr < t).length}件 期限超過</span>` : ''}
+      </div>
+      <button class="btn btn-primary" onclick="go('review')">復習を開始 →</button>
+    </div>` : '';
+
+  const cards = tbs.map(tb => {
+    const st = statsFor(tb.id);
+    const pc = pColor(st.pct);
+    return `
+      <div class="textbook-card" onclick="go('textbook',{tbId:'${tb.id}'})">
+        <div class="textbook-title">${esc(tb.title)}</div>
+        <div class="textbook-meta">${st.total}問 · ${getChapters(tb.id).length}章</div>
+        <div class="textbook-stats">
+          <span><span class="stat-label">進捗 </span><span class="stat-value">${st.studied}/${st.total}</span></span>
+          <span><span class="stat-label">学習率 </span><span class="stat-value ${st.pct>60?'stat-success':'stat-warning'}">${st.pct}%</span></span>
+          ${st.due ? `<span><span class="stat-label">復習待 </span><span class="stat-value ${st.overdue?'stat-danger':'stat-warning'}">${st.due}</span></span>` : ''}
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${st.pct}%;background:${pc}"></div></div>
+        <div class="u-row">
+          <span class="badge badge-perfect">◎ ${st.uc['◎']}</span>
+          <span class="badge badge-good">〇 ${st.uc['〇']}</span>
+          <span class="badge badge-partial">△ ${st.uc['△']}</span>
+          <span class="badge badge-wrong">× ${st.uc['×']}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    ${banner}
+    <div class="section-header">
+      <h2 class="section-title">📚 参考書一覧</h2>
+    </div>
+    <div class="home-grid">
+      ${cards}
+      <div class="add-textbook-card" onclick="openAddModal()">
+        <div style="font-size:2rem">＋</div>
+        <div style="font-weight:500">参考書を追加</div>
+        <div style="font-size:.78rem">テンプレートから選ぶか、自分で設定</div>
+      </div>
+    </div>
+    ${tbs.length === 0 ? `
+      <div class="empty-state">
+        <div class="empty-icon">📖</div>
+        <div>まだ参考書が登録されていません</div>
+        <br>
+        <button class="btn btn-secondary" onclick="openImportModal()" style="margin-right:8px">既存データをインポート</button>
+        <button class="btn btn-primary" onclick="openAddModal()">＋ 参考書を追加</button>
+      </div>` : ''}
+  `;
+}
+
+// ================================================================
+//  VIEW: TEXTBOOK DETAIL
+// ================================================================
+
+function viewTextbook() {
+  const data = load();
+  const tb = data.textbooks.find(t => t.id === S.tbId);
+  if (!tb) { go('home'); return ''; }
+
+  const chapters = getChapters(S.tbId);
+  const st = statsFor(S.tbId);
+  const t = today();
+
+  const blocks = chapters.map(ch => {
+    const problems = getChapterProblems(ch.id);
+    const done = problems.filter(p => p.date).length;
+    const pct = done ? Math.round(done / problems.length * 100) : 0;
+    const isOpen = S.expanded.has(ch.id);
+
+    let rows = '';
+    if (isOpen) {
+      rows = problems.map(p => {
+        const diff = p.nr ? daysDiff(p.nr) : null;
+        const nrHtml = p.nr
+          ? `<span class="p-nr ${diff < 0 ? 'nr-overdue' : diff === 0 ? 'nr-due' : ''}">${diff < 0 ? `${-diff}日超` : diff === 0 ? '今日' : fmtDate(p.nr)}</span>`
+          : `<span class="p-nr">—</span>`;
+        const rowCls = diff !== null && diff < 0 ? 'row-overdue' : diff === 0 ? 'row-due' : '';
+        return `
+          <div class="problem-row ${rowCls}" onclick="openProblemModal('${p.id}')">
+            <div class="p-num">${p.problemNumber}</div>
+            <div class="p-date">${p.date ? fmtDate(p.date) : '—'}</div>
+            <div><span class="${badgeClass(p.u)}">${p.u||'—'}</span></div>
+            <div class="p-miss">${p.miss ? esc(p.miss) : '<span style="color:var(--text-subtle)">—</span>'}</div>
+            ${nrHtml}
+            <div class="p-edit">✏</div>
+          </div>`;
+      }).join('');
+      rows = `<div class="problem-list">
+        <div class="table-header"><div style="text-align:center">No.</div><div>学習日</div><div>理解度</div><div>ミスメモ</div><div style="text-align:right">次回</div><div></div></div>
+        ${rows}
+      </div>`;
+    }
+
+    return `
+      <div class="chapter-block">
+        <div class="chapter-header" onclick="toggleCh('${ch.id}')">
+          <div class="chapter-name">${esc(ch.name)}</div>
+          <div class="chapter-mini-bar">
+            <div class="progress-bar thin"><div class="progress-fill" style="width:${pct}%;background:${pColor(pct)}"></div></div>
+          </div>
+          <div class="chapter-progress-text">${done}/${problems.length}</div>
+          <div class="chapter-chevron ${isOpen ? 'open' : ''}">▼</div>
+        </div>
+        ${rows}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="breadcrumb">
+      <a onclick="go('home')">ホーム</a> › <span>${esc(tb.title)}</span>
+    </div>
+    <div>
+      <h1 class="textbook-header-title">${esc(tb.title)}</h1>
+      <div class="textbook-overview">
+        <span><span style="color:var(--text-muted);font-size:.8rem">進捗 </span><strong style="font-family:'Fira Code',monospace">${st.studied}/${st.total}</strong><span style="color:var(--text-muted);font-size:.8rem"> (${st.pct}%)</span></span>
+        ${st.due ? `<span style="color:var(--${st.overdue?'danger':'warning'});font-size:.82rem">⏰ 復習待ち ${st.due}件</span>` : ''}
+        <div style="flex:1;max-width:180px"><div class="progress-bar"><div class="progress-fill" style="width:${st.pct}%;background:${pColor(st.pct)}"></div></div></div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-secondary" onclick="go('export')">エクスポート</button>
+          <button class="btn btn-ghost" onclick="confirmDeleteTb('${S.tbId}')">削除</button>
+        </div>
+      </div>
+    </div>
+    ${blocks}
+  `;
+}
+
+function toggleCh(id) {
+  S.expanded.has(id) ? S.expanded.delete(id) : S.expanded.add(id);
+  render();
+}
+
+// ================================================================
+//  VIEW: REVIEW QUEUE
+// ================================================================
+
+function viewReview() {
+  const due = reviewsDue();
+  const t = today();
+
+  if (!due.length) return `
+    <div class="breadcrumb"><a onclick="go('home')">ホーム</a> › <span>今日の復習</span></div>
+    <div class="empty-state"><div class="empty-icon">✅</div><div>今日の復習は完了しています！お疲れ様でした。</div></div>
+  `;
+
+  const overdue = due.filter(r => r.nr < t);
+  const todayDue = due.filter(r => r.nr === t);
+
+  function group(items, label, cls) {
+    if (!items.length) return '';
+    return `
+      <div class="review-group-label">${label} (${items.length}件)</div>
+      ${items.map(p => `
+        <div class="review-item ${cls}" onclick="openProblemModal('${p.id}', true)">
+          <div class="review-item-info">
+            <div class="review-item-title">
+              ${esc(p._tb?.title||'')} › ${esc(p._ch?.name||'')} 問${p.problemNumber}
+              <span class="${badgeClass(p.u)}">${p.u||'—'}</span>
+            </div>
+            ${p.miss ? `<div class="review-item-sub">${esc(p.miss)}</div>` : ''}
+            <div class="review-item-sub" style="color:var(--text-subtle);margin-top:2px">
+              学習日: ${fmtDate(p.date)} · 復習${p.rc}回目 · 予定: ${fmtDate(p.nr)}
+            </div>
+          </div>
+          <button class="btn btn-secondary" onclick="event.stopPropagation();openProblemModal('${p.id}',true)" style="font-size:.75rem">復習記録</button>
+        </div>`).join('')}`;
+  }
+
+  return `
+    <div class="breadcrumb"><a onclick="go('home')">ホーム</a> › <span>今日の復習</span></div>
+    <div class="section-header">
+      <h2 class="section-title">📋 今日の復習</h2>
+      <span class="chip">${due.length}件</span>
+    </div>
+    ${group(overdue, '⚠️ 期限超過', 'r-overdue')}
+    ${group(todayDue, '📅 今日が期限', 'r-today')}
+  `;
+}
+
+// ================================================================
+//  VIEW: EXPORT / IMPORT
+// ================================================================
+
+function viewExport() {
+  const tbs = getTextbooks();
+  const opts = tbs.map(t => `<option value="${t.id}">${esc(t.title)}</option>`).join('');
+  const prompt = `以下は私の数学学習記録です。次の点を分析してください。
+
+1. ミスが多い単元ランキング（上位5つ）
+2. 繰り返しているミスのパターン
+   例：「符号ミス」「場合分けの不備」「条件見落とし」など
+3. 特に重点的に復習すべき問題（番号と理由）
+4. 今後の学習方針アドバイス
+
+---
+[ここにダウンロードした studylog_claude_*.json の中身を貼り付ける]`;
+
+  return `
+    <div class="breadcrumb"><a onclick="go('home')">ホーム</a> › <span>データ管理</span></div>
+    <h2 class="section-title" style="margin-bottom:16px">📤 エクスポート / インポート</h2>
+
+    <div class="export-card">
+      <div class="export-title">🔄 全データバックアップ (JSON)</div>
+      <div class="export-desc">すべての参考書・学習記録を1つのJSONファイルに保存します。PCを移行したり、別ブラウザで使うときに使用。</div>
+      <button class="btn btn-primary" onclick="exportBackup();toast('✅ バックアップを保存しました')">バックアップをダウンロード</button>
+    </div>
+
+    <div class="export-card">
+      <div class="export-title">📊 ミスデータ CSV</div>
+      <div class="export-desc">記録したミス一覧をCSVで出力します。Excelで開いて自分なりに分析できます。</div>
+      <div class="form-group">
+        <label class="form-label">対象参考書</label>
+        <select class="form-select" id="sel-csv">
+          <option value="">全参考書</option>${opts}
+        </select>
+      </div>
+      <button class="btn btn-secondary" onclick="exportCSV(document.getElementById('sel-csv').value||null);toast('✅ CSVを保存しました')">CSVをダウンロード</button>
+    </div>
+
+    <div class="export-card">
+      <div class="export-title">🤖 Claude AI 弱点分析データ</div>
+      <div class="export-desc">Claudeに貼り付けるだけで弱点分析ができる最適化JSONを生成します。ダウンロード後、下のプロンプトと一緒にClaudeに送信してください。</div>
+      <div class="form-group">
+        <label class="form-label">対象参考書</label>
+        <select class="form-select" id="sel-claude">
+          <option value="">全参考書</option>${opts}
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="exportForClaude(document.getElementById('sel-claude').value||null)">分析データをダウンロード</button>
+      <hr class="divider">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:6px">📋 Claudeへのプロンプト（コピーして使う）</div>
+      <div class="code-block" id="claude-prompt">${esc(prompt)}</div>
+      <button class="btn btn-ghost" style="margin-top:8px;font-size:.75rem" onclick="navigator.clipboard.writeText(document.getElementById('claude-prompt').innerText).then(()=>toast('✅ コピーしました'))">クリップボードにコピー</button>
+    </div>
+
+    <div class="export-card">
+      <div class="export-title">📥 データのインポート</div>
+      <div class="export-desc">バックアップJSONを読み込んで復元するか、旧フォーマット（配列形式）のJSONをインポートします。</div>
+      <div class="import-zone" onclick="document.getElementById('imp-file').click()">
+        📂 クリックしてJSONファイルを選択<br>
+        <span style="font-size:.72rem;margin-top:4px;display:block">バックアップJSON または 旧フォーマットJSON（配列）</span>
+      </div>
+      <input type="file" id="imp-file" accept=".json" style="display:none" onchange="handleImportFile(event)">
+    </div>
+  `;
+}
+
+// ================================================================
+//  MODAL: PROBLEM EDIT
+// ================================================================
+
+function openProblemModal(id, isReview = false) {
+  const data = load();
+  const p = data.problems.find(x => x.id === id);
+  if (!p) return;
+  const ch = data.chapters.find(c => c.id === p.chapterId);
+  const tb = ch ? data.textbooks.find(t => t.id === ch.textbookId) : null;
+
+  S.editingProblemId = id;
+  S.editingU = p.u;
+
+  const uBtns = U_LEVELS.map(u => `
+    <button class="u-btn ${p.u === u ? 'active' : ''}" data-u="${u}" onclick="pickU('${u}')">${u}</button>`).join('');
+
+  const hasReview = p.nr !== null;
+
+  document.getElementById('modal-root').innerHTML = `
+    <div class="overlay" id="prob-modal" onclick="if(event.target.id==='prob-modal')closeMod('prob-modal')">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title">${esc(ch?.name||'')} — 問${p.problemNumber}</div>
+          <button class="btn btn-ghost btn-icon" onclick="closeMod('prob-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:14px">
+            ${esc(tb?.title||'')}${p.nr ? ` · 次回復習: ${p.nr}` : ''}
+          </div>
+          <div class="form-group">
+            <label class="form-label">学習日</label>
+            <input type="date" class="form-input" id="p-date" value="${p.date||today()}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">理解度</label>
+            <div class="u-selector">${uBtns}</div>
+            <div style="font-size:.72rem;color:var(--text-muted);margin-top:5px">
+              ◎ 完璧 &nbsp; 〇 ほぼOK &nbsp; △ 一部ミス &nbsp; × 解けなかった
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">ミスメモ <span style="font-weight:normal">（何を・なぜ間違えたか）</span></label>
+            <textarea class="form-textarea" id="p-miss" rows="4" placeholder="例: 符号ミス。不等号の向きを逆にした。a≧0の条件を見落とした。">${esc(p.miss||'')}</textarea>
+          </div>
+          ${p.date ? `<div style="font-size:.75rem;color:var(--text-muted);display:flex;gap:14px;flex-wrap:wrap">
+            <span>復習回数: <strong style="font-family:'Fira Code',monospace">${p.rc}</strong></span>
+            ${p.lastReviewDate ? `<span>最終復習: ${fmtDate(p.lastReviewDate)}</span>` : ''}
+          </div>` : ''}
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeMod('prob-modal')">キャンセル</button>
+          ${hasReview ? `<button class="btn btn-secondary" onclick="submitProblem(true)">✅ 復習完了</button>` : ''}
+          <button class="btn btn-primary" onclick="submitProblem(false)">保存</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function pickU(u) {
+  S.editingU = u;
+  document.querySelectorAll('.u-btn').forEach(b => b.classList.toggle('active', b.dataset.u === u));
+}
+
+function submitProblem(isReview) {
+  recordStudy(S.editingProblemId, {
+    date: document.getElementById('p-date')?.value,
+    u:    S.editingU,
+    miss: document.getElementById('p-miss')?.value,
+  }, isReview);
+  closeMod('prob-modal');
+  toast(isReview ? '✅ 復習を記録しました' : '✅ 保存しました');
+  render();
+}
+
+// ================================================================
+//  MODAL: ADD TEXTBOOK
+// ================================================================
+
+function openAddModal() {
+  S._selTpl = 'custom';
+
+  const tplHtml = TEMPLATES.map(t => `
+    <div class="template-opt ${t.id==='custom'?'selected':''}" data-tid="${t.id}" onclick="pickTemplate('${t.id}')">
+      <div style="flex:1">
+        <div class="template-name">${esc(t.title)}</div>
+        <div class="template-count">${t.chapters.length > 0 ? `${t.chapters.length}章 / ${t.chapters.reduce((s,c)=>s+c.problemCount,0)}問` : '自由入力'}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('modal-root').innerHTML = `
+    <div class="overlay" id="add-modal">
+      <div class="modal modal-lg" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title">📚 参考書を追加</div>
+          <button class="btn btn-ghost btn-icon" onclick="closeMod('add-modal')">✕</button>
+        </div>
+        <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+          <div class="form-group">
+            <label class="form-label">参考書タイトル</label>
+            <input type="text" class="form-input" id="tb-title" placeholder="例: 青チャート 数学II+B">
+          </div>
+          <div class="form-group">
+            <label class="form-label">テンプレートから選ぶ</label>
+            <div id="tpl-list">${tplHtml}</div>
+          </div>
+          <div id="ch-editor">
+            <div class="form-group">
+              <label class="form-label">章の設定（名前と問題数）</label>
+              <div id="ch-rows"></div>
+              <button class="btn btn-ghost" style="width:100%;margin-top:4px;font-size:.8rem" onclick="addChRow()">＋ 章を追加</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeMod('add-modal')">キャンセル</button>
+          <button class="btn btn-primary" onclick="submitAddTb()">追加する</button>
+        </div>
+      </div>
+    </div>`;
+
+  renderChRows([]);
+}
+
+function pickTemplate(tid) {
+  S._selTpl = tid;
+  document.querySelectorAll('.template-opt').forEach(el => el.classList.toggle('selected', el.dataset.tid === tid));
+  const tpl = TEMPLATES.find(t => t.id === tid);
+  if (!tpl) return;
+  const titleInput = document.getElementById('tb-title');
+  if (!titleInput.value.trim() && tid !== 'custom') titleInput.value = tpl.title;
+  renderChRows(tpl.chapters);
+}
+
+function renderChRows(chapters) {
+  const container = document.getElementById('ch-rows');
+  if (!container) return;
+  if (chapters.length === 0) {
+    container.innerHTML = `<div class="ch-row" id="ch-0">
+      <input type="text" class="form-input" placeholder="章名" data-f="name">
+      <input type="number" class="form-input" value="10" placeholder="問題数" data-f="cnt">
+      <button class="btn btn-ghost btn-icon" onclick="delChRow(this)" style="padding:4px">✕</button>
+    </div>`;
+    return;
+  }
+  container.innerHTML = chapters.map((ch, i) => `
+    <div class="ch-row">
+      <input type="text" class="form-input" value="${esc(ch.name)}" placeholder="章名" data-f="name">
+      <input type="number" class="form-input" value="${ch.problemCount}" placeholder="問題数" data-f="cnt">
+      <button class="btn btn-ghost btn-icon" onclick="delChRow(this)" style="padding:4px">✕</button>
+    </div>`).join('');
+}
+
+function addChRow() {
+  const c = document.getElementById('ch-rows');
+  const div = document.createElement('div');
+  div.className = 'ch-row';
+  div.innerHTML = `
+    <input type="text" class="form-input" placeholder="章名" data-f="name">
+    <input type="number" class="form-input" value="10" placeholder="問題数" data-f="cnt">
+    <button class="btn btn-ghost btn-icon" onclick="delChRow(this)" style="padding:4px">✕</button>`;
+  c.appendChild(div);
+}
+
+function delChRow(btn) { btn.closest('.ch-row').remove(); }
+
+function submitAddTb() {
+  const title = document.getElementById('tb-title')?.value.trim();
+  if (!title) { toast('⚠️ タイトルを入力してください', 'warn'); return; }
+
+  const rows = document.querySelectorAll('#ch-rows .ch-row');
+  const chapters = [];
+  rows.forEach(row => {
+    const name = row.querySelector('[data-f="name"]')?.value.trim();
+    const cnt  = parseInt(row.querySelector('[data-f="cnt"]')?.value) || 0;
+    if (name && cnt > 0) chapters.push({ name, problemCount: cnt });
+  });
+
+  if (!chapters.length) { toast('⚠️ 章を1つ以上追加してください', 'warn'); return; }
+
+  const id = addTextbook(title, chapters);
+  closeMod('add-modal');
+  toast(`✅「${title}」を追加しました`);
+  go('textbook', { tbId: id });
+}
+
+// ================================================================
+//  MODAL: IMPORT
+// ================================================================
+
+function openImportModal() {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="overlay" id="imp-modal">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title">📥 既存データをインポート</div>
+          <button class="btn btn-ghost btn-icon" onclick="closeMod('imp-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">参考書タイトル（旧フォーマットの場合）</label>
+            <input type="text" class="form-input" id="imp-title" placeholder="例: 理系数学入試の核心">
+          </div>
+          <div class="import-zone" onclick="document.getElementById('imp-modal-file').click()">
+            📂 JSONファイルを選択してください
+          </div>
+          <input type="file" id="imp-modal-file" accept=".json" style="display:none" onchange="doImport(event)">
+        </div>
+      </div>
+    </div>`;
+}
+
+function handleImportFile(e) { doImport(e); }
+
+function doImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const title = (document.getElementById('imp-title')||document.getElementById('imp-modal-title'))?.value.trim()
+    || file.name.replace('.json','');
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const json = JSON.parse(ev.target.result);
+      if (json.textbooks && json.chapters && json.problems) {
+        importBackup(json);
+        closeMod('imp-modal');
+        toast('✅ バックアップを復元しました');
+        go('home');
+      } else if (Array.isArray(json)) {
+        const id = importLegacy(json, title);
+        closeMod('imp-modal');
+        toast(`✅「${title}」をインポートしました`);
+        go('textbook', { tbId: id });
+      } else {
+        toast('⚠️ 対応していない形式です', 'warn');
+      }
+    } catch(err) {
+      toast('⚠️ JSONの解析に失敗しました', 'danger');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ================================================================
+//  MODAL: DELETE CONFIRM
+// ================================================================
+
+function confirmDeleteTb(id) {
+  const tb = load().textbooks.find(t => t.id === id);
+  if (!tb) return;
+  document.getElementById('modal-root').innerHTML = `
+    <div class="overlay" id="del-modal">
+      <div class="modal" onclick="event.stopPropagation()" style="max-width:380px">
+        <div class="modal-header">
+          <div class="modal-title">🗑 参考書の削除</div>
+          <button class="btn btn-ghost btn-icon" onclick="closeMod('del-modal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:.88rem">「<strong>${esc(tb.title)}</strong>」とすべての学習記録を削除します。</p>
+          <p class="chip chip-danger" style="margin-top:10px;display:inline-block">⚠️ この操作は元に戻せません</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" onclick="closeMod('del-modal')">キャンセル</button>
+          <button class="btn btn-danger" onclick="doDeleteTb('${id}')">削除する</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function doDeleteTb(id) {
+  removeTextbook(id);
+  closeMod('del-modal');
+  toast('🗑 削除しました');
+  go('home');
+}
+
+function closeMod(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ================================================================
+//  VIEW: SETTINGS（復習間隔カスタマイズ）
+// ================================================================
+
+function viewSettings() {
+  const strat = getStrategy();
+  const def   = DEFAULT_STRATEGY;
+
+  const uMeta = {
+    '◎': { label: '◎ 完璧',        cls: 'badge-perfect', hint: '空にすると復習しない（マスター扱い）' },
+    '〇': { label: '〇 ほぼOK',      cls: 'badge-good',    hint: '基本は「7, 30」など' },
+    '△': { label: '△ 一部ミス',    cls: 'badge-partial', hint: '基本は「3, 7, 14」など' },
+    '×': { label: '× 解けなかった', cls: 'badge-wrong',   hint: '基本は「1, 3, 7, 14」など' },
+  };
+
+  const rows = U_LEVELS.map(u => {
+    const m = uMeta[u];
+    const vals = (strat[u] || []).join(', ');
+    const defVals = def[u].join(', ') || '（なし）';
+    const schedule = (strat[u]||[]).length
+      ? (strat[u]||[]).map((d,i) => `${i+1}回目→${d}日後`).join(' / ')
+      : 'この理解度は復習しない設定です';
+    return `
+      <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+          <span class="badge ${m.cls}" style="font-size:.85rem;padding:3px 10px">${m.label}</span>
+          <span style="font-size:.72rem;color:var(--text-subtle)">${m.hint}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <input type="text" class="form-input" id="strat-${esc(u)}"
+            value="${vals}"
+            placeholder="例: 1, 3, 7, 14"
+            style="font-family:'Fira Code',monospace;flex:1;min-width:160px"
+          >
+          <button class="btn btn-ghost" style="font-size:.72rem;white-space:nowrap" onclick="resetStrat('${esc(u)}')">
+            デフォルト (${defVals || 'なし'})
+          </button>
+        </div>
+        <div style="font-size:.72rem;color:var(--text-subtle);margin-top:5px" id="hint-${esc(u)}">${schedule}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="breadcrumb"><a onclick="go('home')">ホーム</a> › <span>設定</span></div>
+    <h2 class="section-title" style="margin-bottom:6px">⚙️ 復習間隔の設定</h2>
+    <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:20px">
+      理解度ごとに復習する日数をカンマ区切りで入力。<br>
+      例: <code style="font-family:'Fira Code',monospace;background:var(--bg-elevated);padding:1px 5px;border-radius:3px">1, 3, 7, 14</code> → 1日後・3日後・7日後・14日後の順に復習。以降は終了。
+    </p>
+    ${rows}
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="submitSettings()">保存する</button>
+      <button class="btn btn-ghost" onclick="resetAllStrat()">すべてデフォルトに戻す</button>
+    </div>
+    <div style="margin-top:28px">
+      <div class="export-title" style="margin-bottom:8px">💡 設定の目安</div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:14px 16px;font-size:.78rem;color:var(--text-muted);line-height:2.2">
+        <strong style="color:var(--text)">エビングハウス忘却曲線の標準モデル（デフォルト）</strong><br>
+        ◎ 完璧：復習不要<br>
+        〇 ほぼOK：<code style="font-family:'Fira Code',monospace">7, 30</code>（1週間後・1ヶ月後）<br>
+        △ 一部ミス：<code style="font-family:'Fira Code',monospace">3, 7, 14</code>（3日・1週間・2週間後）<br>
+        × 解けなかった：<code style="font-family:'Fira Code',monospace">1, 3, 7, 14</code>（翌日・3日・1週間・2週間後）<br>
+        <br>
+        <strong style="color:var(--text)">直前期・仕上げ向けに短くする場合</strong><br>
+        △：<code style="font-family:'Fira Code',monospace">1, 3, 7</code>　　×：<code style="font-family:'Fira Code',monospace">1, 2, 4, 7</code>
+      </div>
+    </div>
+  `;
+}
+
+function resetStrat(u) {
+  const el = document.getElementById(`strat-${u}`);
+  if (el) el.value = DEFAULT_STRATEGY[u].join(', ');
+}
+
+function resetAllStrat() {
+  U_LEVELS.forEach(u => {
+    const el = document.getElementById(`strat-${u}`);
+    if (el) el.value = DEFAULT_STRATEGY[u].join(', ');
+  });
+}
+
+function submitSettings() {
+  const strat = {};
+  U_LEVELS.forEach(u => {
+    const raw = document.getElementById(`strat-${u}`)?.value || '';
+    const parts = raw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0);
+    strat[u] = [...new Set(parts)].sort((a,b) => a - b);
+  });
+  saveStrategy(strat);
+  toast('✅ 復習間隔を保存しました');
+  go('settings');
+}
+
+// ================================================================
+//  TOAST
+// ================================================================
+
+function toast(msg, type = 'ok') {
+  const c = document.getElementById('toast-root');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  if (type === 'danger') el.style.borderColor = 'var(--danger)';
+  if (type === 'warn')   el.style.borderColor = 'var(--warning)';
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 2600);
+}
+
+// ================================================================
+//  MAIN RENDER
+// ================================================================
+
+function render() {
+  const due = reviewsDue().length;
+  const dateStr = new Date().toLocaleDateString('ja-JP', { month:'long', day:'numeric', weekday:'short' });
+
+  const navBtn = (v, emoji, label) =>
+    `<button class="nav-btn ${S.view===v?'active':''}" onclick="go('${v}')">${emoji} ${label}</button>`;
+
+  let content = '';
+  if (S.view === 'home')     content = viewHome();
+  if (S.view === 'textbook') content = viewTextbook();
+  if (S.view === 'review')   content = viewReview();
+  if (S.view === 'export')   content = viewExport();
+  if (S.view === 'settings') content = viewSettings();
+
+  document.getElementById('app').innerHTML = `
+    <div class="header">
+      <div class="header-logo" onclick="go('home')">Study<span>Log</span></div>
+      <nav class="nav">
+        ${navBtn('home','📚','ホーム')}
+        <button class="nav-btn ${S.view==='review'?'active':''}" onclick="go('review')">
+          📋 復習 ${due ? `<span class="review-badge">${due}</span>` : ''}
+        </button>
+        ${navBtn('export','📤','データ')}
+        ${navBtn('settings','⚙️','設定')}
+      </nav>
+      <span class="header-date">${dateStr}</span>
+    </div>
+    <main>${content}</main>
+  `;
+}
+
+// ================================================================
+//  STARTUP
+// ================================================================
+render();
+</script>
+</body>
+</html>
